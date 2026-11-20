@@ -1,20 +1,31 @@
+from flask import Flask, render_template, request, send_file
+from rembg import remove
 from pathlib import Path
 
-from rembg import remove
+app = Flask(__name__)
 
-script_dir = Path(__file__).resolve().parent
-input_path = script_dir / "input.jpg"
-output_path = script_dir / "output.png"
+@app.route("/")
+def home():
+    return render_template("index.html")
 
-with input_path.open("rb") as input_img:
-    input_data = input_img.read()
+@app.route("/remove-bg", methods=["POST"])
+def remove_bg():
+    image = request.files["image"]
 
-output_data = remove(
-    input_data,
-    providers=["CPUExecutionProvider"],
-)
+    input_data = image.read()
 
-with output_path.open("wb") as output_img:
-    output_img.write(output_data)
+    output_data = remove(
+        input_data,
+        providers=["CPUExecutionProvider"],
+    )
 
-print("Background removed successfully!")
+    output_path = "output.png"
+
+    with open(output_path, "wb") as f:
+        f.write(output_data)
+
+    return send_file(output_path, mimetype="image/png")
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
